@@ -6,116 +6,12 @@ import { motion } from 'framer-motion'
 import { MOTION } from '@/lib/motion'
 import { Header, Footer } from '@/components'
 import { cn } from '@/lib/utils'
-
-interface TeamResult {
-  place: number
-  players: string[]
-  tied?: boolean
-}
-
-interface TournamentResult {
-  id: string
-  event: string
-  date: string
-  location: string
-  heat: 'bell' | 'jalapeno' | 'poblano'
-  results: TeamResult[]
-}
-
-// Results data - structured for easy CMS migration later
-const tournamentResults: TournamentResult[] = [
-  {
-    id: 'bell-pepper-2025-07-19',
-    event: 'Bell Pepper Open',
-    date: 'July 19, 2025',
-    location: 'Aurora, IL',
-    heat: 'bell',
-    results: [
-      { place: 1, players: ['Charlie Podgorny', 'Nate Meyer', 'Peter Zurawski'] },
-      { place: 2, players: ['Nick Maruyama', 'Zach Solomon', 'Lincoln Geist'] },
-      { place: 3, players: ['Casey Maas', 'Kyle Zediker', 'Kaden Sauer'], tied: true },
-      { place: 3, players: ['David Butler', 'Elijah Scott', 'Owen Randle'], tied: true },
-      { place: 5, players: ['Kevin Messer', 'Mark Mir', 'Grant Adler'], tied: true },
-      { place: 5, players: ['Matt Muelenickel', 'Jeremiah Aro', 'Charlie Clifford'], tied: true },
-      { place: 5, players: ['Mitchell Carrera', 'Connor Jaral', 'Nolan Krygsheld'], tied: true },
-      { place: 5, players: ['Joe Watkins', 'Adrian Cebula', 'Eric Tripp'], tied: true },
-      { place: 9, players: ['Sam Kharasch', 'Alex Pasek', 'Tyler Donovan'], tied: true },
-      { place: 9, players: ['Tom Blankschein', 'Eric McCarthy', 'Mike Hellman'], tied: true },
-      { place: 9, players: ['Grant Veldman', 'Will Mensching', 'Everett Haynes'], tied: true },
-      { place: 9, players: ['Kurt Vandenberg', 'Brett Vandenberg', 'Caleb Vandenberg'], tied: true },
-    ],
-  },
-  {
-    id: 'grass-launch-2025-05-31',
-    event: 'Grass Launch',
-    date: 'May 31, 2025',
-    location: 'Aurora, IL',
-    heat: 'bell',
-    results: [
-      { place: 1, players: ['Nate Meyer', 'Charlie Podgorny', 'Ian Schuller'] },
-      { place: 2, players: ['Everett Haynes', 'Will Mensching', 'Grant Veldman'] },
-      { place: 3, players: ['Casey Maas', 'Kyle Zediker', 'Kaden Sauer'], tied: true },
-      { place: 3, players: ['Nick Maruyama', 'Zach Solomon', 'Lincoln Geist'], tied: true },
-      { place: 5, players: ['Kevin Messer', 'Mark Mir', 'Grant Adler'], tied: true },
-      { place: 5, players: ['David Butler', 'Elijah Scott', 'Owen Randle'], tied: true },
-      { place: 5, players: ['Sam Kharasch', 'Alex Pasek', 'Tyler Donovan'], tied: true },
-      { place: 5, players: ['Tom Blankschein', 'Eric McCarthy', 'Mike Hellman'], tied: true },
-    ],
-  },
-]
-
-const heatConfig = {
-  bell: {
-    color: 'var(--heat-bell)',
-    textClass: 'text-heat-bell',
-    borderClass: 'border-heat-bell',
-    bgClass: 'bg-heat-bell',
-  },
-  jalapeno: {
-    color: 'var(--heat-jalapeno)',
-    textClass: 'text-heat-jalapeno',
-    borderClass: 'border-heat-jalapeno',
-    bgClass: 'bg-heat-jalapeno',
-  },
-  poblano: {
-    color: 'var(--heat-poblano)',
-    textClass: 'text-heat-poblano',
-    borderClass: 'border-heat-poblano',
-    bgClass: 'bg-heat-poblano',
-  },
-}
-
-function PlaceBadge({ place }: { place: number }) {
-  if (place === 1) {
-    return (
-      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-500/20 text-yellow-500">
-        <span className="text-lg">🥇</span>
-      </div>
-    )
-  }
-  if (place === 2) {
-    return (
-      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-400/20 text-zinc-400">
-        <span className="text-lg">🥈</span>
-      </div>
-    )
-  }
-  if (place === 3) {
-    return (
-      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-700/20 text-amber-600">
-        <span className="text-lg">🥉</span>
-      </div>
-    )
-  }
-  return (
-    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-800 text-zinc-500">
-      <span className="font-display text-sm">{place}</span>
-    </div>
-  )
-}
+import { tournamentResults, type TournamentResult } from '@/lib/standings-data'
+import { HEAT_CONFIG } from '@/lib/heat-config'
+import { PlaceBadge } from '@/components/standings/PlaceBadge'
 
 function TournamentResultCard({ tournament }: { tournament: TournamentResult }) {
-  const config = heatConfig[tournament.heat]
+  const config = HEAT_CONFIG[tournament.heat]
 
   // Group results by place for tied teams
   const groupedResults = tournament.results.reduce((acc, result) => {
@@ -287,7 +183,7 @@ export default function StandingsPage() {
           </div>
         </section>
 
-        {/* Season Leaders (Optional - for future points system) */}
+        {/* Season Leaders */}
         <section className="section-padding bg-pepper-charcoal/30">
           <div className="section-container">
             <motion.div

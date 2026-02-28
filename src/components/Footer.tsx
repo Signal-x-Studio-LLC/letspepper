@@ -61,6 +61,15 @@ const footerLinks = [
   { label: 'FAQ', href: '/faq' },
 ]
 
+const communityLinks = [
+  { label: 'Rankings', href: '/rankings' },
+  { label: 'Predictions', href: '/predictions' },
+  { label: 'Pepper Quiz', href: '/quiz' },
+  { label: 'Pepper Bingo', href: '/bingo' },
+  { label: 'Pepper Awards', href: '/awards' },
+  { label: 'Hot Takes', href: '/hot-takes' },
+]
+
 const legalLinks = [
   { label: 'Waiver', href: '/waiver' },
   { label: 'Privacy Policy', href: '/privacy' },
@@ -76,7 +85,7 @@ export function Footer() {
       className="border-t border-zinc-800/50 bg-pepper-charcoal/30"
     >
       <div className="section-container py-12 lg:py-16">
-        <div className="grid gap-12 lg:grid-cols-3">
+        <div className="grid gap-12 lg:grid-cols-4">
           {/* Brand */}
           <div className="space-y-4">
             <Link href="/" className="inline-flex items-center gap-2 group">
@@ -106,6 +115,25 @@ export function Footer() {
             </h3>
             <ul className="space-y-3">
               {footerLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-zinc-500 hover:text-white transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Community */}
+          <div>
+            <h3 className="font-accent text-xs uppercase tracking-wider text-zinc-400 mb-4">
+              Community
+            </h3>
+            <ul className="space-y-3">
+              {communityLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
