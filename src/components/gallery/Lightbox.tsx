@@ -21,13 +21,12 @@ export function Lightbox({
   onNavigate,
 }: LightboxProps) {
   const photo = photos[currentIndex]
-  if (!photo) return null
-
   const hasPrev = currentIndex > 0
   const hasNext = currentIndex < photos.length - 1
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
+      if (!photo) return
       switch (e.key) {
         case 'Escape':
           onClose()
@@ -40,17 +39,20 @@ export function Lightbox({
           break
       }
     },
-    [onClose, onNavigate, currentIndex, hasPrev, hasNext]
+    [photo, onClose, onNavigate, currentIndex, hasPrev, hasNext]
   )
 
   useEffect(() => {
+    if (!photo) return
     document.addEventListener('keydown', handleKeyDown)
     document.body.style.overflow = 'hidden'
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
       document.body.style.overflow = ''
     }
-  }, [handleKeyDown])
+  }, [photo, handleKeyDown])
+
+  if (!photo) return null
 
   return (
     <AnimatePresence>
