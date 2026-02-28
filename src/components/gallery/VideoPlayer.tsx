@@ -68,4 +68,4 @@ export function VideoPlayer({ cfStreamId, title, className, onClose }: VideoPlay
  * CF Stream customer subdomain — set in env or fallback.
  * Format: https://customer-{subdomain}.cloudflarestream.com/{videoId}/iframe
  */
-const CF_STREAM_SUBDOMAIN = process.env.NEXT_PUBLIC_CF_STREAM_SUBDOMAIN || 'f77l9nwspm9h0g13'
+const CF_STREAM_SUBDOMAIN = process.env.NEXT_PUBLIC_CF_STREAM_SUBDOMAIN || 'mztsxz382jswgq00'
