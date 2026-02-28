@@ -13,6 +13,7 @@
     "@fontsource/bebas-neue": "^5.0.0",
     "@fontsource/inter": "^5.0.0",
     "@fontsource/space-mono": "^5.0.0",
+    "@supabase/supabase-js": "^2.98.0",
     "@vercel/analytics": "^1.6.1",
     "clsx": "^2.1.0",
     "framer-motion": "^11.0.0",

@@ -7,6 +7,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: '**.smugmug.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'imagedelivery.net',
+      },
     ],
   },
 }

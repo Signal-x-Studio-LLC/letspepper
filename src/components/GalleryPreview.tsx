@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { MOTION } from '@/lib/motion'
@@ -68,16 +69,14 @@ export function GalleryPreview() {
             </h2>
           </div>
 
-          <a
-            href="https://gallery.ninochavez.co/Sports/Volleyball/Grass/LPO"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/gallery"
             className="btn-secondary"
-            aria-label="View full Let's Pepper photo gallery (opens in new tab)"
+            aria-label="View full Let's Pepper photo gallery"
           >
             <span>View Full Gallery</span>
-            <span aria-hidden="true">↗</span>
-          </a>
+            <span aria-hidden="true">&rarr;</span>
+          </Link>
         </motion.div>
 
         {/* Gallery Grid */}

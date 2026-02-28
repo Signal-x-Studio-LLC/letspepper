@@ -11,7 +11,7 @@ const navLinks = [
   { href: '/#series', label: 'The Series' },
   { href: '/#belle', label: 'Pepper Belle' },
   { href: '/about', label: 'About' },
-  { href: '/#gallery', label: 'Gallery' },
+  { href: '/gallery', label: 'Gallery' },
 ]
 
 export function Header() {
