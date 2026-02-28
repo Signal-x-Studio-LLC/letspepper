@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { fetchAlbumPhotos } from '@/lib/gallery'
+import { fetchAlbumPhotos, fetchAlbumVideos } from '@/lib/gallery'
 import { AlbumDetail } from './AlbumDetail'
 import type { Metadata } from 'next'
 
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const name = extractAlbumSlugName(album)
   return {
     title: `${name} | Gallery | Let's Pepper`,
-    description: `Photos from ${name} — Let's Pepper grassroots volleyball tournament.`,
+    description: `Photos and videos from ${name} — Let's Pepper grassroots volleyball tournament.`,
   }
 }
 
@@ -36,25 +36,25 @@ export default async function AlbumPage({ params, searchParams }: PageProps) {
   const albumKey = extractAlbumKey(album)
   const page = Math.max(1, parseInt(pageParam || '1'))
 
-  const { photos, totalCount } = await fetchAlbumPhotos({
-    albumKey,
-    page,
-    pageSize: 48,
-  })
+  const [{ photos, totalCount }, videos] = await Promise.all([
+    fetchAlbumPhotos({ albumKey, page, pageSize: 48 }),
+    fetchAlbumVideos(albumKey),
+  ])
 
-  if (totalCount === 0) {
+  if (totalCount === 0 && videos.length === 0) {
     notFound()
   }
 
-  // Get album name from the first photo or slug
+  // Get album name from first photo, first video, or slug
   const albumName =
-    photos[0]?.albumName || extractAlbumSlugName(album)
+    photos[0]?.albumName || videos[0]?.albumName || extractAlbumSlugName(album)
 
   return (
     <AlbumDetail
       albumName={albumName}
       albumKey={albumKey}
       photos={photos}
+      videos={videos}
       totalCount={totalCount}
       currentPage={page}
       pageSize={48}

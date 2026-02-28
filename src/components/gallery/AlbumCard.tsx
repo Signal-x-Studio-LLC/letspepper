@@ -30,7 +30,7 @@ function slugify(albumName: string, albumKey: string): string {
 export function AlbumCard({ album, priority = false }: AlbumCardProps) {
   const coverSrc = album.coverCfImageId
     ? cfImageUrl(album.coverCfImageId, 'medium')
-    : null
+    : album.coverThumbnailUrl || null
   const slug = slugify(album.albumName, album.albumKey)
 
   return (
@@ -68,7 +68,8 @@ export function AlbumCard({ album, priority = false }: AlbumCardProps) {
         <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
           <p className="font-accent text-[10px] text-heat-jalapeno uppercase tracking-wider mb-1">
             {formatDate(album.latestPhotoDate)}
-            {album.photoCount > 0 && ` · ${album.photoCount} photos`}
+            {album.photoCount > 0 && ` \u00B7 ${album.photoCount} photos`}
+            {album.videoCount > 0 && ` \u00B7 ${album.videoCount} videos`}
           </p>
           <h3 className="font-display text-lg sm:text-xl text-white leading-tight">
             {album.albumName}

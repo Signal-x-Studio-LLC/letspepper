@@ -6,54 +6,109 @@
  */
 
 import { supabase } from './supabase'
-import type { Photo, Album } from '@/types/photo'
+import type { Photo, Video, Album } from '@/types/photo'
 
 /** Columns needed for photo display (avoids fetching embeddings/heavy data) */
 const PHOTO_COLUMNS =
   'photo_id, image_key, cf_image_id, album_key, album_name, sport_type, photo_category, play_type, action_intensity, aspect_ratio, photo_date, upload_date'
 
 /**
- * LPO album allowlist — explicit album keys from the Let's Pepper Open Series.
- * Source of truth: SmugMug folder /Sports/Volleyball/Grass/LPO
- *
- * To add a new event: push its Supabase album_key to this array.
- * TODO: Replace with `gallery_scope = 'lpo'` column on album_settings.
+ * Fetch LPO album keys dynamically from album_settings.
+ * New albums are added via SQL (`gallery_scope = 'lpo'`) — no code deploy needed.
  */
-const LPO_ALBUM_KEYS = [
-  'j5MfJD', // Bell Pepper Open – Official Gallery
-  '5M7kNx', // Grass Launch | Open Triples Tournament
-  'QwhCK5', // Bell Pepper - Final Match Highlights (video)
-  'p4J2jk', // Bell Pepper Open - Video Highlights (video)
-]
+async function fetchLPOAlbumKeys(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('album_settings')
+    .select('album_key')
+    .eq('gallery_scope', 'lpo')
+
+  if (error) {
+    console.error('[Gallery] Error fetching LPO album keys:', error.message)
+    return []
+  }
+
+  return (data || []).map((row) => row.album_key)
+}
 
 // ---------------------------------------------------------------------------
 // Album queries
 // ---------------------------------------------------------------------------
 
 export async function fetchLPOAlbums(): Promise<Album[]> {
-  const { data, error } = await supabase
-    .from('albums_summary')
-    .select('*')
-    .in('album_key', LPO_ALBUM_KEYS)
-    .order('latest_photo_date', { ascending: false, nullsFirst: false })
+  const albumKeys = await fetchLPOAlbumKeys()
+  if (albumKeys.length === 0) return []
 
-  if (error) {
-    console.error('[Gallery] Error fetching LPO albums:', error.message)
-    return []
+  const [photosResult, videosResult] = await Promise.all([
+    supabase
+      .from('albums_summary')
+      .select('*')
+      .in('album_key', albumKeys)
+      .order('latest_photo_date', { ascending: false, nullsFirst: false }),
+    supabase
+      .from('videos_summary')
+      .select('*')
+      .in('album_key', albumKeys),
+  ])
+
+  if (photosResult.error) {
+    console.error('[Gallery] Error fetching photo albums:', photosResult.error.message)
+  }
+  if (videosResult.error) {
+    console.error('[Gallery] Error fetching video albums:', videosResult.error.message)
   }
 
-  return (data || []).map((row) => ({
-    albumKey: row.album_key,
-    albumName: row.album_name || 'Unknown Album',
-    photoCount: parseInt(row.photo_count) || 0,
-    coverCfImageId: row.cover_cf_image_id ?? null,
-    primarySport: row.primary_sport || 'volleyball',
-    primaryCategory: row.primary_category || 'action',
-    earliestPhotoDate: row.earliest_photo_date,
-    latestPhotoDate: row.latest_photo_date,
-    sports: row.sports || [],
-    categories: row.categories || [],
-  }))
+  const photoAlbums = photosResult.data || []
+  const videoAlbums = videosResult.data || []
+
+  // Index video data by album_key for fast lookup
+  const videoMap = new Map(videoAlbums.map((v) => [v.album_key, v]))
+
+  // Build merged album list from photo albums
+  const merged = new Map<string, Album>()
+
+  for (const row of photoAlbums) {
+    const video = videoMap.get(row.album_key)
+    const videoCount = video ? parseInt(video.video_count) || 0 : 0
+    const photoCount = parseInt(row.photo_count) || 0
+    merged.set(row.album_key, {
+      albumKey: row.album_key,
+      albumName: row.album_name || 'Unknown Album',
+      photoCount,
+      videoCount,
+      coverCfImageId: row.cover_cf_image_id ?? null,
+      coverThumbnailUrl: null,
+      mediaType: videoCount > 0 ? 'mixed' : 'photos',
+      primarySport: row.primary_sport || 'volleyball',
+      primaryCategory: row.primary_category || 'action',
+      earliestPhotoDate: row.earliest_photo_date,
+      latestPhotoDate: row.latest_photo_date,
+      sports: row.sports || [],
+      categories: row.categories || [],
+    })
+  }
+
+  // Add video-only albums (not in albums_summary)
+  for (const row of videoAlbums) {
+    if (!merged.has(row.album_key)) {
+      merged.set(row.album_key, {
+        albumKey: row.album_key,
+        albumName: row.album_name || 'Unknown Album',
+        photoCount: 0,
+        videoCount: parseInt(row.video_count) || 0,
+        coverCfImageId: null,
+        coverThumbnailUrl: row.cover_thumbnail_url ?? null,
+        mediaType: 'videos',
+        primarySport: 'volleyball',
+        primaryCategory: 'highlights',
+        earliestPhotoDate: row.earliest_video_date ?? null,
+        latestPhotoDate: row.latest_video_date ?? null,
+        sports: ['volleyball'],
+        categories: ['highlights'],
+      })
+    }
+  }
+
+  return Array.from(merged.values())
 }
 
 // ---------------------------------------------------------------------------
@@ -108,6 +163,43 @@ export async function fetchPhoto(photoId: string): Promise<Photo | null> {
   if (error || !data) return null
   return transformRow(data)
 }
+
+// ---------------------------------------------------------------------------
+// Video queries
+// ---------------------------------------------------------------------------
+
+export async function fetchAlbumVideos(albumKey: string): Promise<Video[]> {
+  const { data, error } = await supabase
+    .from('video_metadata')
+    .select(
+      'video_id, cf_stream_id, cf_stream_thumbnail, album_key, album_name, title, description, duration_seconds, sport_type, video_category, video_date'
+    )
+    .eq('album_key', albumKey)
+    .order('upload_date', { ascending: false })
+
+  if (error) {
+    console.error('[Gallery] Error fetching album videos:', error.message)
+    return []
+  }
+
+  return (data || []).map((row) => ({
+    id: row.video_id as string,
+    cfStreamId: row.cf_stream_id as string,
+    cfStreamThumbnail: (row.cf_stream_thumbnail as string) || null,
+    albumKey: row.album_key as string,
+    albumName: (row.album_name as string) || 'Unknown Album',
+    title: (row.title as string) || null,
+    description: (row.description as string) || null,
+    durationSeconds: (row.duration_seconds as number) || null,
+    sportType: (row.sport_type as string) || 'volleyball',
+    videoCategory: (row.video_category as string) || 'highlights',
+    videoDate: (row.video_date as string) || null,
+  }))
+}
+
+// ---------------------------------------------------------------------------
+// Stats
+// ---------------------------------------------------------------------------
 
 export async function fetchGalleryStats(): Promise<{
   totalPhotos: number
