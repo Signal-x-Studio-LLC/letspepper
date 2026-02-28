@@ -54,8 +54,8 @@ export function GalleryLanding({ albums, stats }: GalleryLandingProps) {
                 animate="animate"
                 transition={{ staggerChildren: 0.1 }}
               >
-                {albums.map((album) => (
-                  <AlbumCard key={album.albumKey} album={album} />
+                {albums.map((album, index) => (
+                  <AlbumCard key={album.albumKey} album={album} priority={index < 3} />
                 ))}
               </motion.div>
             )}

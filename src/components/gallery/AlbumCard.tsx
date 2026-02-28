@@ -10,6 +10,7 @@ import type { Album } from '@/types/photo'
 
 interface AlbumCardProps {
   album: Album
+  priority?: boolean
 }
 
 function formatDate(dateStr: string | null): string {
@@ -26,7 +27,7 @@ function slugify(albumName: string, albumKey: string): string {
   return `${slug}--${albumKey}`
 }
 
-export function AlbumCard({ album }: AlbumCardProps) {
+export function AlbumCard({ album, priority = false }: AlbumCardProps) {
   const coverSrc = album.coverCfImageId
     ? cfImageUrl(album.coverCfImageId, 'medium')
     : null
@@ -52,6 +53,7 @@ export function AlbumCard({ album }: AlbumCardProps) {
             fill
             className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            priority={priority}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-text-muted">

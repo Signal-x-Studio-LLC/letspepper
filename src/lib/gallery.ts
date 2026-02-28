@@ -13,21 +13,17 @@ const PHOTO_COLUMNS =
   'photo_id, image_key, cf_image_id, album_key, album_name, sport_type, photo_category, play_type, action_intensity, aspect_ratio, photo_date, upload_date'
 
 /**
- * LPO album filter — matches albums belonging to Let's Pepper tournaments.
+ * LPO album allowlist — explicit album keys from the Let's Pepper Open Series.
+ * Source of truth: SmugMug folder /Sports/Volleyball/Grass/LPO
  *
- * TODO: Replace with `gallery_scope = 'lpo'` column on album_settings
- * once the database migration is applied. For now, filter by album naming patterns.
+ * To add a new event: push its Supabase album_key to this array.
+ * TODO: Replace with `gallery_scope = 'lpo'` column on album_settings.
  */
-const LPO_ALBUM_PATTERNS = [
-  '%LPO%',
-  '%Pepper%',
-  '%Bell Pepper%',
-  '%Jalapeno%',
-  '%Jalapeño%',
-  '%Poblano%',
-  '%Krush%',
-  '%Cookout%',
-  '%Player%Appreciation%',
+const LPO_ALBUM_KEYS = [
+  'j5MfJD', // Bell Pepper Open – Official Gallery
+  '5M7kNx', // Grass Launch | Open Triples Tournament
+  'QwhCK5', // Bell Pepper - Final Match Highlights (video)
+  'p4J2jk', // Bell Pepper Open - Video Highlights (video)
 ]
 
 // ---------------------------------------------------------------------------
@@ -35,14 +31,10 @@ const LPO_ALBUM_PATTERNS = [
 // ---------------------------------------------------------------------------
 
 export async function fetchLPOAlbums(): Promise<Album[]> {
-  const orCondition = LPO_ALBUM_PATTERNS.map(
-    (p) => `album_name.ilike.${p}`
-  ).join(',')
-
   const { data, error } = await supabase
     .from('albums_summary')
     .select('*')
-    .or(orCondition)
+    .in('album_key', LPO_ALBUM_KEYS)
     .order('latest_photo_date', { ascending: false, nullsFirst: false })
 
   if (error) {
