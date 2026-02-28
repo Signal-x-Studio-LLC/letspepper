@@ -68,20 +68,42 @@ export function Lightbox({
           onClick={onClose}
         />
 
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className={cn(
-            'absolute top-4 right-4 z-10 p-2 rounded-full',
-            'bg-pepper-charcoal/80 text-white hover:bg-pepper-charcoal',
-            'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-heat-jalapeno'
-          )}
-          aria-label="Close lightbox"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
-        </button>
+        {/* Top-right actions */}
+        <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+          {/* Download button */}
+          <a
+            href={cfImageUrl(photo.cfImageId, 'public')}
+            download
+            onClick={(e) => e.stopPropagation()}
+            className={cn(
+              'p-2 rounded-full',
+              'bg-pepper-charcoal/80 text-white hover:bg-pepper-charcoal',
+              'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-heat-jalapeno'
+            )}
+            aria-label="Download photo"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </a>
+
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className={cn(
+              'p-2 rounded-full',
+              'bg-pepper-charcoal/80 text-white hover:bg-pepper-charcoal',
+              'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-heat-jalapeno'
+            )}
+            aria-label="Close lightbox"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
 
         {/* Navigation: Previous */}
         {hasPrev && (
