@@ -3,11 +3,13 @@
  * 7 questions with personality-based scoring.
  */
 
-export type PepperPersonality = 'bell' | 'serrano' | 'chipotle' | 'habanero' | 'reaper'
+export type PepperPersonality = 'bell' | 'serrano' | 'chipotle' | 'habanero' | 'reaper' | 'pepperX'
 
 export interface QuizOption {
   text: string
   scores: Partial<Record<PepperPersonality, number>>
+  /** If set, selecting this option short-circuits the quiz to this result */
+  easterEgg?: PepperPersonality
 }
 
 export interface QuizQuestion {
@@ -34,6 +36,7 @@ export const quizQuestions: QuizQuestion[] = [
       { text: 'Float serve to the weakest passer', scores: { serrano: 3, chipotle: 1 } },
       { text: 'Bomb it. Full power. No hesitation.', scores: { habanero: 3, reaper: 1 } },
       { text: 'Jump serve at 110% — it\'s all or nothing', scores: { reaper: 3, habanero: 1 } },
+      { text: 'Sky ball. Straight up. Assert dominance.', scores: {}, easterEgg: 'pepperX' },
     ],
   },
   {
@@ -143,6 +146,16 @@ export const pepperResults: Record<PepperPersonality, PepperResult> = {
     color: 'text-red-500',
     bgColor: 'bg-red-500',
   },
+  pepperX: {
+    id: 'pepperX',
+    title: 'Pepper X',
+    tagline: 'Beyond the Scoville scale',
+    description: 'You chose the sky ball. There\'s no quiz needed — you\'re already operating on a level the rest of us can\'t comprehend. You don\'t play volleyball. Volleyball plays you. The hottest pepper known to man, and it\'s not even close.',
+    traits: ['Chaotic energy', 'Sky ball specialist', 'Menace to society', 'Legend'],
+    heatLevel: 5,
+    color: 'text-fuchsia-500',
+    bgColor: 'bg-fuchsia-500',
+  },
 }
 
 /** Calculate quiz result from answer indices */
@@ -153,6 +166,7 @@ export function calculateResult(answers: number[]): PepperPersonality {
     chipotle: 0,
     habanero: 0,
     reaper: 0,
+    pepperX: 0,
   }
 
   answers.forEach((answerIndex, questionIndex) => {

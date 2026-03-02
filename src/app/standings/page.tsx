@@ -237,11 +237,11 @@ export default function StandingsPage() {
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-zinc-300">Casey Maas</span>
-                    <span className="font-accent text-sm text-heat-poblano">2x 3rd</span>
+                    <span className="text-zinc-300">Nick Maruyama</span>
+                    <span className="font-accent text-sm text-heat-poblano">2nd + 3rd</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-zinc-300">Kyle Zediker</span>
+                    <span className="text-zinc-300">Casey Maas</span>
                     <span className="font-accent text-sm text-heat-poblano">2x 3rd</span>
                   </div>
                 </div>

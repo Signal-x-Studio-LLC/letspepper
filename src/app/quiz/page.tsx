@@ -9,6 +9,30 @@ import { cn } from '@/lib/utils'
 import { quizQuestions, pepperResults, calculateResult, type PepperPersonality } from '@/lib/quiz-data'
 import { getStoredValue, setStoredValue, STORAGE_KEYS } from '@/lib/local-storage'
 
+interface QuizDistribution {
+  personality: string
+  count: number
+  percentage: number
+}
+
+const PERSONALITY_LABELS: Record<string, string> = {
+  bell: 'Bell Pepper',
+  serrano: 'Serrano',
+  chipotle: 'Chipotle',
+  habanero: 'Habanero',
+  reaper: 'Carolina Reaper',
+  pepperX: 'Pepper X',
+}
+
+const PERSONALITY_COLORS: Record<string, string> = {
+  bell: 'bg-heat-bell',
+  serrano: 'bg-heat-poblano',
+  chipotle: 'bg-heat-jalapeno',
+  habanero: 'bg-heat-habanero',
+  reaper: 'bg-red-600',
+  pepperX: 'bg-fuchsia-500',
+}
+
 function QuizProgress({ current, total }: { current: number; total: number }) {
   return (
     <div className="w-full max-w-md mx-auto mb-8">
@@ -28,11 +52,56 @@ function QuizProgress({ current, total }: { current: number; total: number }) {
   )
 }
 
+function CommunityResults({ distribution, total, userResult }: {
+  distribution: QuizDistribution[]
+  total: number
+  userResult: PepperPersonality
+}) {
+  const sorted = [...distribution].sort((a, b) => b.count - a.count)
+
+  return (
+    <motion.div
+      className="mt-8 bg-zinc-900/30 rounded-2xl border border-zinc-800/50 p-6 sm:p-8 text-left"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3, duration: 0.5 }}
+    >
+      <h3 className="font-display text-xl uppercase text-white mb-1 text-center">Community Results</h3>
+      <p className="text-xs text-zinc-500 font-accent uppercase tracking-wider text-center mb-6">
+        {total.toLocaleString()} quizzes taken
+      </p>
+      <div className="space-y-3">
+        {sorted.map((item) => (
+          <div key={item.personality}>
+            <div className="flex justify-between text-sm mb-1">
+              <span className={cn('text-zinc-300', item.personality === userResult && 'text-white font-medium')}>
+                {PERSONALITY_LABELS[item.personality] || item.personality}
+                {item.personality === userResult && ' (You)'}
+              </span>
+              <span className="text-zinc-500 font-accent text-xs">{item.percentage}%</span>
+            </div>
+            <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+              <motion.div
+                className={cn('h-full rounded-full', PERSONALITY_COLORS[item.personality] || 'bg-zinc-600')}
+                initial={{ width: 0 }}
+                animate={{ width: `${item.percentage}%` }}
+                transition={{ duration: 0.8, delay: 0.1, ease: MOTION.ease.outExpo }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  )
+}
+
 export default function QuizPage() {
   const [started, setStarted] = useState(false)
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<number[]>([])
   const [result, setResult] = useState<PepperPersonality | null>(null)
+  const [distribution, setDistribution] = useState<QuizDistribution[]>([])
+  const [distributionTotal, setDistributionTotal] = useState(0)
 
   // Check for existing result on mount
   useEffect(() => {
@@ -53,7 +122,35 @@ export default function QuizPage() {
     }
   }, [])
 
+  // Fetch community distribution when result is shown
+  useEffect(() => {
+    if (!result) return
+    fetch('/api/quiz')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.distribution) {
+          setDistribution(data.distribution)
+          setDistributionTotal(data.total)
+        }
+      })
+      .catch(() => {}) // Degrade gracefully
+  }, [result])
+
   function handleAnswer(answerIndex: number) {
+    const option = quizQuestions[currentQuestion].options[answerIndex]
+
+    // Easter egg: short-circuit the quiz
+    if (option?.easterEgg) {
+      setResult(option.easterEgg)
+      setStoredValue(STORAGE_KEYS.QUIZ_RESULT, option.easterEgg)
+      fetch('/api/quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ personality: option.easterEgg }),
+      }).catch(() => {})
+      return
+    }
+
     const newAnswers = [...answers, answerIndex]
     setAnswers(newAnswers)
 
@@ -61,6 +158,13 @@ export default function QuizPage() {
       const personality = calculateResult(newAnswers)
       setResult(personality)
       setStoredValue(STORAGE_KEYS.QUIZ_RESULT, personality)
+
+      // Fire-and-forget: record tally
+      fetch('/api/quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ personality }),
+      }).catch(() => {})
     } else {
       setCurrentQuestion(currentQuestion + 1)
     }
@@ -213,8 +317,17 @@ export default function QuizPage() {
                     </div>
                   </div>
 
+                  {/* Community Results */}
+                  {distribution.length > 0 && (
+                    <CommunityResults
+                      distribution={distribution}
+                      total={distributionTotal}
+                      userResult={result}
+                    />
+                  )}
+
                   {/* Action Buttons */}
-                  <div className="flex flex-wrap justify-center gap-4">
+                  <div className="flex flex-wrap justify-center gap-4 mt-8">
                     <button type="button" onClick={handleShare} className="btn-primary">
                       Share Result
                     </button>
