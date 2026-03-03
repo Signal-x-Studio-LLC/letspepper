@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Bebas_Neue, Inter, Space_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import Script from 'next/script'
 import './globals.css'
 
 const bebasNeue = Bebas_Neue({
@@ -83,6 +84,14 @@ export default function RootLayout({
 
         {/* Vercel Web Analytics */}
         <Analytics />
+
+        {/* Cloudflare Web Analytics */}
+        <Script
+          defer
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon='{"token": "ee3d5f84b15b458aa4ba1e01ccaae83d"}'
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   )
