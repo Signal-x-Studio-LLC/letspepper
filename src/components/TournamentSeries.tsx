@@ -12,6 +12,8 @@ interface Tournament {
   mascot: string
   tagline: string
   description: string
+  date: string // ISO date for comparison (YYYY-MM-DD)
+  displayDate: string // Human-readable date
   features: string[]
 }
 
@@ -24,6 +26,8 @@ const tournaments: Tournament[] = [
     tagline: 'Season Opener',
     description:
       'First tournament of the season. Shake off the rust, find your rhythm, and get warmed up.',
+    date: '2026-06-06',
+    displayDate: 'June 6, 2026',
     features: ['Season Kickoff', 'Full Media', 'Cash Prizes'],
   },
   {
@@ -34,6 +38,8 @@ const tournaments: Tournament[] = [
     tagline: 'Bring The Heat',
     description:
       "Mid-season. You're dialed in. Now it's time to turn up the intensity.",
+    date: '2026-07-18',
+    displayDate: 'July 18, 2026',
     features: ['Peak Competition', 'High Intensity', 'Fast Pace'],
   },
   {
@@ -44,6 +50,8 @@ const tournaments: Tournament[] = [
     tagline: 'Season Finale',
     description:
       'Cooling things down. Last tournament of the season. Leave it all on the grass.',
+    date: '2026-08-01',
+    displayDate: 'August 1, 2026',
     features: ['Season Closer', 'Final Standings', 'Year-End Celebration'],
   },
 ]
@@ -88,15 +96,43 @@ function HeatMeter({ level }: { level: number }) {
   )
 }
 
-function TournamentCard({ tournament }: { tournament: Tournament }) {
+function getNextEventId(tournaments: Tournament[]): string | null {
+  const today = new Date().toISOString().split('T')[0]
+  const upcoming = tournaments.filter((t) => t.date >= today)
+  return upcoming.length > 0 ? upcoming[0].id : null
+}
+
+function TournamentCard({ tournament, isNext }: { tournament: Tournament; isNext: boolean }) {
   const config = heatConfig[tournament.heat]
 
   return (
     <motion.article
-      className={cn('heat-card group p-6 sm:p-8 h-full', config.cardClass)}
+      className={cn(
+        'heat-card group p-6 sm:p-8 h-full',
+        config.cardClass,
+        isNext && 'ring-2 ring-offset-2 ring-offset-pepper-black ring-[var(--heat-bell)]',
+        isNext && tournament.heat === 'jalapeno' && 'ring-[var(--heat-jalapeno)]',
+        isNext && tournament.heat === 'poblano' && 'ring-[var(--heat-poblano)]',
+      )}
       variants={MOTION.variants.slideUp}
       whileHover={{ y: -8, transition: { duration: 0.2 } }}
     >
+      {/* Next Up Badge */}
+      {isNext && (
+        <div className={cn(
+          'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-accent uppercase tracking-widest mb-4',
+          'bg-zinc-800 border',
+          `border-[var(--heat-${tournament.heat})]`,
+          config.textClass,
+        )}>
+          <span className="relative flex h-2 w-2">
+            <span className={cn('animate-ping absolute inline-flex h-full w-full rounded-full opacity-75', `bg-[var(--heat-${tournament.heat})]`)} />
+            <span className={cn('relative inline-flex rounded-full h-2 w-2', `bg-[var(--heat-${tournament.heat})]`)} />
+          </span>
+          Next Up · {tournament.displayDate}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <motion.div
@@ -180,6 +216,8 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
 }
 
 export function TournamentSeries() {
+  const nextEventId = getNextEventId(tournaments)
+
   return (
     <section
       id="series"
@@ -216,7 +254,7 @@ export function TournamentSeries() {
           transition={{ staggerChildren: 0.15 }}
         >
           {tournaments.map((tournament) => (
-            <TournamentCard key={tournament.id} tournament={tournament} />
+            <TournamentCard key={tournament.id} tournament={tournament} isNext={tournament.id === nextEventId} />
           ))}
         </motion.div>
 
