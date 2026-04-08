@@ -113,6 +113,7 @@ export const pepperResults: Record<PepperPersonality, PepperResult> = {
     description: 'Quiet confidence, deadly execution. You don\'t need to be the loudest on the court — your game speaks for itself. Opponents underestimate you once. Never twice.',
     traits: ['Calculated', 'Clutch performer', 'Under the radar', 'Smart player'],
     heatLevel: 2,
+    // Maps to heat level 2 (poblano) in the shared heat color system — see heat-config.ts
     color: 'text-heat-poblano',
     bgColor: 'bg-heat-poblano',
   },
@@ -143,8 +144,8 @@ export const pepperResults: Record<PepperPersonality, PepperResult> = {
     description: 'There is no off switch. You go 100% on every ball, every point, every set. Your warm-up is someone else\'s full match. You\'re the player opponents fear and teammates love having.',
     traits: ['Relentless', 'Fearless', 'All-out effort', 'Unstoppable'],
     heatLevel: 5,
-    color: 'text-red-500',
-    bgColor: 'bg-red-500',
+    color: 'text-red-600',
+    bgColor: 'bg-red-600',
   },
   pepperX: {
     id: 'pepperX',

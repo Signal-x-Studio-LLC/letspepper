@@ -13,6 +13,7 @@ export default function VotePage() {
   const [players, setPlayers] = useState<string[]>([])
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null)
   const [hasVoted, setHasVoted] = useState(false)
+  const [tallies, setTallies] = useState<Record<string, number>>({})
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -40,17 +41,47 @@ export default function VotePage() {
     }
   }, [])
 
+  // Fetch tallies after voting
+  useEffect(() => {
+    if (!hasVoted) return
+    const scope = `mvp:${eventId || 'general'}`
+    fetch(`/api/votes?scope=${scope}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.tallies?.[scope]) setTallies(data.tallies[scope])
+      })
+      .catch(() => {})
+  }, [hasVoted, eventId])
+
   function handleVote() {
     if (!selectedPlayer) return
     const deviceId = getDeviceId()
     const storageKey = `${STORAGE_KEYS.MVP_VOTE_PREFIX}${eventId || 'general'}`
     setStoredValue(storageKey, { player: selectedPlayer, deviceId })
     setHasVoted(true)
+
+    // Submit to API
+    fetch('/api/votes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        device_id: deviceId,
+        scope: `mvp:${eventId || 'general'}`,
+        choice: selectedPlayer,
+      }),
+    }).catch(() => {})
   }
 
   const eventName = eventId
     ? tournamentResults.find(t => t.id === eventId)?.event || 'Event'
     : 'Season'
+
+  // Sort players by vote count when showing results
+  const sortedPlayers = hasVoted && Object.keys(tallies).length > 0
+    ? [...players].sort((a, b) => (tallies[b] || 0) - (tallies[a] || 0))
+    : players
+
+  const totalVotes = Object.values(tallies).reduce((a, b) => a + b, 0)
 
   return (
     <>
@@ -86,17 +117,67 @@ export default function VotePage() {
             <div className="max-w-lg mx-auto">
               {hasVoted ? (
                 <motion.div
-                  className="bg-zinc-900/30 rounded-xl border border-heat-bell/30 p-8 text-center"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  className="space-y-2"
+                  initial="initial"
+                  animate="animate"
+                  transition={{ staggerChildren: 0.03 }}
                 >
-                  <div className="text-4xl mb-3">🏆</div>
-                  <h3 className="font-display text-2xl uppercase text-heat-bell mb-2">
-                    Vote Recorded
-                  </h3>
-                  <p className="text-zinc-400">
-                    You voted for <span className="text-white font-medium">{selectedPlayer}</span>
-                  </p>
+                  {/* Confirmation banner */}
+                  <motion.div
+                    className="bg-zinc-900/30 rounded-xl border border-heat-bell/30 p-6 text-center mb-4"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                  >
+                    <div className="text-3xl mb-2">🏆</div>
+                    <p className="text-zinc-400 text-sm">
+                      You voted for <span className="text-white font-medium">{selectedPlayer}</span>
+                    </p>
+                    {totalVotes > 0 && (
+                      <p className="text-xs text-zinc-600 font-accent mt-1">
+                        {totalVotes} total votes
+                      </p>
+                    )}
+                  </motion.div>
+
+                  {/* Ranked results */}
+                  {sortedPlayers.map((player, i) => {
+                    const count = tallies[player] || 0
+                    const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0
+                    if (count === 0 && totalVotes > 0) return null
+
+                    return (
+                      <motion.div
+                        key={player}
+                        className={cn(
+                          'p-4 rounded-xl border transition-all',
+                          selectedPlayer === player
+                            ? 'border-heat-habanero/50 bg-heat-habanero/10'
+                            : 'border-zinc-800/50 bg-zinc-900/30'
+                        )}
+                        variants={MOTION.variants.slideUp}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <span className="text-zinc-600 font-accent text-xs w-5">{i + 1}.</span>
+                            <span className={cn('font-display text-lg uppercase', selectedPlayer === player ? 'text-white' : 'text-zinc-300')}>
+                              {player}
+                            </span>
+                          </div>
+                          <span className="text-zinc-500 font-accent text-xs">{count} votes</span>
+                        </div>
+                        {totalVotes > 0 && (
+                          <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden ml-8">
+                            <motion.div
+                              className="h-full bg-heat-habanero rounded-full"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${pct}%` }}
+                              transition={{ duration: 0.6, ease: MOTION.ease.outExpo }}
+                            />
+                          </div>
+                        )}
+                      </motion.div>
+                    )
+                  })}
                 </motion.div>
               ) : (
                 <motion.div

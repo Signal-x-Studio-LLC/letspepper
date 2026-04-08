@@ -7,9 +7,14 @@ import { Header, Footer } from '@/components'
 import { cn } from '@/lib/utils'
 import { predictionEvents, calculatePredictionScore, type PropHeat } from '@/lib/predictions-data'
 import { HEAT_CONFIG, type HeatLevel } from '@/lib/heat-config'
-import { getStoredValue, setStoredValue, STORAGE_KEYS } from '@/lib/local-storage'
+import { getStoredValue, setStoredValue, getDeviceId, STORAGE_KEYS } from '@/lib/local-storage'
 
 const heatMap: Record<PropHeat, HeatLevel> = { bell: 'bell', jalapeno: 'jalapeno', reaper: 'reaper' }
+
+interface LeaderboardEntry {
+  nickname: string | null
+  score: number
+}
 
 function DeadlineTimer({ deadline }: { deadline: string }) {
   const [timeLeft, setTimeLeft] = useState('')
@@ -53,12 +58,28 @@ export default function PredictionsPage() {
   const storageKey = `${STORAGE_KEYS.PREDICTIONS_PREFIX}${event.id}`
   const [picks, setPicks] = useState<Record<string, number>>({})
   const [submitted, setSubmitted] = useState(false)
+  const [nickname, setNickname] = useState('')
+  const [entryCount, setEntryCount] = useState(0)
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
 
   useEffect(() => {
     const saved = getStoredValue<{ picks: Record<string, number>; submitted: boolean }>(storageKey, { picks: {}, submitted: false })
     setPicks(saved.picks)
     setSubmitted(saved.submitted)
   }, [storageKey])
+
+  // Fetch predictions data from API
+  useEffect(() => {
+    const deviceId = getDeviceId()
+    fetch(`/api/predictions?event_id=${event.id}&device_id=${deviceId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.entryCount) setEntryCount(data.entryCount)
+        if (data.leaderboard) setLeaderboard(data.leaderboard)
+        if (data.ownEntry?.nickname) setNickname(data.ownEntry.nickname)
+      })
+      .catch(() => {})
+  }, [event.id])
 
   const isLocked = event.isLocked || new Date(event.deadline).getTime() <= Date.now()
 
@@ -74,6 +95,28 @@ export default function PredictionsPage() {
   function handleSubmit() {
     setSubmitted(true)
     setStoredValue(storageKey, { picks, submitted: true })
+
+    const deviceId = getDeviceId()
+    fetch('/api/predictions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        device_id: deviceId,
+        event_id: event.id,
+        picks,
+        nickname: nickname.trim() || null,
+      }),
+    })
+      .then(() => {
+        // Re-fetch entry count
+        return fetch(`/api/predictions?event_id=${event.id}&device_id=${deviceId}`)
+      })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.entryCount) setEntryCount(data.entryCount)
+        if (data.leaderboard) setLeaderboard(data.leaderboard)
+      })
+      .catch(() => {})
   }
 
   const totalPossible = event.props.reduce((sum, p) => sum + p.points, 0)
@@ -110,6 +153,14 @@ export default function PredictionsPage() {
                 <span className="font-accent text-xs uppercase tracking-wider text-zinc-500">
                   {totalPossible} pts possible
                 </span>
+                {entryCount > 0 && (
+                  <>
+                    <div className="text-zinc-600">|</div>
+                    <span className="font-accent text-xs uppercase tracking-wider text-zinc-500">
+                      {entryCount} predictions submitted
+                    </span>
+                  </>
+                )}
               </div>
             </motion.div>
           </div>
@@ -125,6 +176,38 @@ export default function PredictionsPage() {
                 <p className="text-zinc-500 text-sm mt-1">
                   {score.correct} correct out of {event.props.length} props
                 </p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Leaderboard (if results revealed and scores exist) */}
+        {event.resultsRevealed && leaderboard.length > 0 && (
+          <section className="section-padding pt-0">
+            <div className="section-container">
+              <div className="max-w-md">
+                <h3 className="font-display text-xl uppercase text-white mb-4">Leaderboard</h3>
+                <div className="space-y-2">
+                  {leaderboard.map((entry, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between bg-zinc-900/30 rounded-lg border border-zinc-800/50 px-4 py-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={cn(
+                          'font-display text-lg w-6',
+                          i === 0 ? 'text-heat-bell' : i === 1 ? 'text-zinc-400' : i === 2 ? 'text-heat-habanero' : 'text-zinc-600'
+                        )}>
+                          {i + 1}
+                        </span>
+                        <span className="text-zinc-300 text-sm">
+                          {entry.nickname || 'Anonymous'}
+                        </span>
+                      </div>
+                      <span className="font-accent text-sm text-heat-jalapeno">{entry.score} pts</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </section>
@@ -202,9 +285,22 @@ export default function PredictionsPage() {
               })}
             </motion.div>
 
-            {/* Submit */}
+            {/* Nickname + Submit */}
             {!isLocked && !submitted && (
               <div className="mt-8 max-w-3xl">
+                <div className="mb-4">
+                  <label className="block font-accent text-xs uppercase tracking-wider text-zinc-500 mb-2">
+                    Nickname (for leaderboard)
+                  </label>
+                  <input
+                    type="text"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    maxLength={30}
+                    placeholder="Anonymous"
+                    className="w-full max-w-xs bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-2 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-heat-poblano"
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={handleSubmit}
@@ -226,6 +322,11 @@ export default function PredictionsPage() {
                 <p className="text-zinc-400 text-sm">
                   Your predictions are saved. Results will be revealed after the event.
                 </p>
+                {entryCount > 0 && (
+                  <p className="text-xs text-zinc-600 font-accent mt-2">
+                    {entryCount} predictions submitted so far
+                  </p>
+                )}
               </motion.div>
             )}
           </div>

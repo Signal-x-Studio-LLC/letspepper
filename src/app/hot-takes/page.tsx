@@ -1,13 +1,22 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { MOTION } from '@/lib/motion'
 import { Header, Footer } from '@/components'
 import { cn } from '@/lib/utils'
-import { seededTakes, type HotTake } from '@/lib/hot-takes-data'
 import { HEAT_CONFIG, type HeatLevel } from '@/lib/heat-config'
-import { getStoredValue, setStoredValue, STORAGE_KEYS } from '@/lib/local-storage'
+import { getDeviceId } from '@/lib/local-storage'
+
+interface Take {
+  id: number
+  text: string
+  author: string
+  heat: string
+  fireCount: number
+  isSeed: boolean
+  userReacted: boolean
+}
 
 const HEAT_BORDER: Record<string, string> = {
   bell: 'border-heat-bell/30',
@@ -18,43 +27,81 @@ const HEAT_BORDER: Record<string, string> = {
 }
 
 export default function HotTakesPage() {
-  const [customTakes, setCustomTakes] = useState<HotTake[]>([])
-  const [reactions, setReactions] = useState<Record<string, boolean>>({})
+  const [takes, setTakes] = useState<Take[]>([])
   const [newTake, setNewTake] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitMessage, setSubmitMessage] = useState<string | null>(null)
 
-  useEffect(() => {
-    setCustomTakes(getStoredValue<HotTake[]>(STORAGE_KEYS.HOT_TAKES_CUSTOM, []))
-    setReactions(getStoredValue<Record<string, boolean>>(STORAGE_KEYS.HOT_TAKES_REACTIONS, {}))
+  const fetchTakes = useCallback(() => {
+    const deviceId = getDeviceId()
+    fetch(`/api/hot-takes?device_id=${deviceId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.takes) setTakes(data.takes)
+      })
+      .catch(() => {})
   }, [])
 
-  const allTakes = [...seededTakes, ...customTakes]
+  useEffect(() => {
+    fetchTakes()
+  }, [fetchTakes])
 
-  function handleReaction(takeId: string) {
-    setReactions(prev => {
-      const next = { ...prev, [takeId]: !prev[takeId] }
-      setStoredValue(STORAGE_KEYS.HOT_TAKES_REACTIONS, next)
-      return next
+  function handleReaction(takeId: number) {
+    const deviceId = getDeviceId()
+
+    // Optimistic update
+    setTakes((prev) =>
+      prev.map((t) =>
+        t.id === takeId
+          ? {
+              ...t,
+              userReacted: !t.userReacted,
+              fireCount: t.userReacted ? Math.max(t.fireCount - 1, 0) : t.fireCount + 1,
+            }
+          : t
+      )
+    )
+
+    fetch(`/api/hot-takes/${takeId}/react`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ device_id: deviceId }),
+    }).catch(() => {
+      // Revert on failure
+      fetchTakes()
     })
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!newTake.trim() || newTake.length > 280) return
+    if (!newTake.trim() || newTake.length > 280 || submitting) return
 
-    const heats: HotTake['heat'][] = ['bell', 'jalapeno', 'poblano', 'habanero', 'reaper']
-    const randomHeat = heats[Math.floor(Math.random() * heats.length)]
+    setSubmitting(true)
+    const deviceId = getDeviceId()
 
-    const take: HotTake = {
-      id: `custom-${Date.now()}`,
-      text: newTake.trim(),
-      author: 'You',
-      heat: randomHeat,
+    try {
+      const res = await fetch('/api/hot-takes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id: deviceId, text: newTake.trim() }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        setNewTake('')
+        setSubmitMessage('Submitted! Your take is pending review.')
+        setTimeout(() => setSubmitMessage(null), 5000)
+      } else {
+        setSubmitMessage(data.error || 'Failed to submit')
+        setTimeout(() => setSubmitMessage(null), 5000)
+      }
+    } catch {
+      setSubmitMessage('Failed to submit. Try again.')
+      setTimeout(() => setSubmitMessage(null), 5000)
+    } finally {
+      setSubmitting(false)
     }
-
-    const updated = [take, ...customTakes]
-    setCustomTakes(updated)
-    setStoredValue(STORAGE_KEYS.HOT_TAKES_CUSTOM, updated)
-    setNewTake('')
   }
 
   return (
@@ -100,15 +147,22 @@ export default function HotTakesPage() {
                 />
                 <button
                   type="submit"
-                  disabled={!newTake.trim()}
-                  className={cn('btn-primary', !newTake.trim() && 'opacity-50 cursor-not-allowed')}
+                  disabled={!newTake.trim() || submitting}
+                  className={cn('btn-primary', (!newTake.trim() || submitting) && 'opacity-50 cursor-not-allowed')}
                 >
-                  Post
+                  {submitting ? 'Posting...' : 'Post'}
                 </button>
               </div>
-              <p className="text-xs text-zinc-600 mt-1 font-accent">
-                {newTake.length}/280 characters
-              </p>
+              <div className="flex justify-between mt-1">
+                <p className="text-xs text-zinc-600 font-accent">
+                  {newTake.length}/280 characters
+                </p>
+                {submitMessage && (
+                  <p className="text-xs text-heat-bell font-accent animate-pulse">
+                    {submitMessage}
+                  </p>
+                )}
+              </div>
             </form>
           </div>
         </section>
@@ -122,10 +176,9 @@ export default function HotTakesPage() {
               animate="animate"
               transition={{ staggerChildren: 0.05 }}
             >
-              {allTakes.map((take) => {
+              {takes.map((take) => {
                 const borderColor = HEAT_BORDER[take.heat] || HEAT_BORDER.bell
                 const heat = HEAT_CONFIG[take.heat as HeatLevel] || HEAT_CONFIG.bell
-                const isLit = reactions[take.id]
 
                 return (
                   <motion.div
@@ -148,13 +201,13 @@ export default function HotTakesPage() {
                         onClick={() => handleReaction(take.id)}
                         className={cn(
                           'flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all',
-                          isLit
+                          take.userReacted
                             ? cn('bg-heat-habanero/20', heat.textClass)
                             : 'text-zinc-600 hover:text-zinc-400'
                         )}
-                        aria-label={isLit ? 'Remove fire reaction' : 'Add fire reaction'}
+                        aria-label={take.userReacted ? 'Remove fire reaction' : 'Add fire reaction'}
                       >
-                        🔥
+                        🔥 {take.fireCount > 0 && <span>{take.fireCount}</span>}
                       </button>
                     </div>
                   </motion.div>

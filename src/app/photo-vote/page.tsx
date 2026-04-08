@@ -6,20 +6,49 @@ import { MOTION } from '@/lib/motion'
 import { Header, Footer } from '@/components'
 import { cn } from '@/lib/utils'
 import { votablePhotos } from '@/lib/photo-vote-data'
-import { getStoredValue, setStoredValue, STORAGE_KEYS } from '@/lib/local-storage'
+import { getStoredValue, setStoredValue, getDeviceId, STORAGE_KEYS } from '@/lib/local-storage'
+
+const SCOPE = 'photo:season-2025'
 
 export default function PhotoVotePage() {
   const [votedPhotoId, setVotedPhotoId] = useState<string | null>(null)
+  const [tallies, setTallies] = useState<Record<string, number>>({})
 
   useEffect(() => {
     const saved = getStoredValue<string | null>(STORAGE_KEYS.PHOTO_VOTE, null)
     setVotedPhotoId(saved)
   }, [])
 
+  // Fetch tallies on mount
+  useEffect(() => {
+    fetch(`/api/votes?scope=${SCOPE}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.tallies?.[SCOPE]) setTallies(data.tallies[SCOPE])
+      })
+      .catch(() => {})
+  }, [])
+
   function handleVote(photoId: string) {
-    if (votedPhotoId) return // Already voted
+    if (votedPhotoId) return
     setVotedPhotoId(photoId)
     setStoredValue(STORAGE_KEYS.PHOTO_VOTE, photoId)
+
+    const deviceId = getDeviceId()
+    fetch('/api/votes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ device_id: deviceId, scope: SCOPE, choice: photoId }),
+    })
+      .then(() => {
+        // Re-fetch tallies after voting
+        return fetch(`/api/votes?scope=${SCOPE}`)
+      })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.tallies?.[SCOPE]) setTallies(data.tallies[SCOPE])
+      })
+      .catch(() => {})
   }
 
   return (
@@ -62,6 +91,7 @@ export default function PhotoVotePage() {
               {votablePhotos.map((photo) => {
                 const isVoted = votedPhotoId === photo.id
                 const hasVoted = votedPhotoId !== null
+                const voteCount = tallies[photo.id] || 0
 
                 return (
                   <motion.div
@@ -84,6 +114,13 @@ export default function PhotoVotePage() {
                         </p>
                       </div>
                     </div>
+
+                    {/* Vote count badge */}
+                    {voteCount > 0 && (
+                      <div className="absolute top-2 right-2 bg-zinc-900/80 backdrop-blur-sm rounded-full px-2 py-0.5">
+                        <span className="text-xs font-accent text-zinc-400">{voteCount} votes</span>
+                      </div>
+                    )}
 
                     {/* Caption + Vote */}
                     <div className="p-4">

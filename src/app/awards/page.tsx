@@ -18,6 +18,7 @@ interface VoteState {
 export default function AwardsPage() {
   const [votes, setVotes] = useState<Record<string, string>>({})
   const [submitted, setSubmitted] = useState(false)
+  const [tallies, setTallies] = useState<Record<string, Record<string, number>>>({})
 
   useEffect(() => {
     const saved = getStoredValue<VoteState>(STORAGE_KEYS.AWARDS_VOTES, {
@@ -29,6 +30,18 @@ export default function AwardsPage() {
     setSubmitted(saved.submitted)
   }, [])
 
+  // Fetch live tallies when submitted or on mount if already submitted
+  useEffect(() => {
+    if (!submitted) return
+    const scopes = awardCategories.map((c) => `awards:${c.id}`).join(',')
+    fetch(`/api/votes?scopes=${scopes}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.tallies) setTallies(data.tallies)
+      })
+      .catch(() => {})
+  }, [submitted])
+
   function handleVote(categoryId: string, nomineeId: string) {
     if (submitted) return
     setVotes(prev => {
@@ -37,11 +50,36 @@ export default function AwardsPage() {
     })
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     const deviceId = getDeviceId()
     const state: VoteState = { votes, submitted: true, deviceId }
     setStoredValue(STORAGE_KEYS.AWARDS_VOTES, state)
     setSubmitted(true)
+
+    // Submit all votes in parallel
+    const promises = awardCategories.map((category) => {
+      const choice = votes[category.id]
+      if (!choice) return Promise.resolve()
+      return fetch('/api/votes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          device_id: deviceId,
+          scope: `awards:${category.id}`,
+          choice,
+        }),
+      }).catch(() => {})
+    })
+    await Promise.all(promises)
+
+    // Fetch tallies after submitting
+    const scopes = awardCategories.map((c) => `awards:${c.id}`).join(',')
+    fetch(`/api/votes?scopes=${scopes}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.tallies) setTallies(data.tallies)
+      })
+      .catch(() => {})
   }
 
   const votedCount = Object.keys(votes).length
@@ -83,6 +121,8 @@ export default function AwardsPage() {
               {awardCategories.map((category) => {
                 const heat = HEAT_CONFIG[category.heat as HeatLevel]
                 const selectedNominee = votes[category.id]
+                const scopeTallies = tallies[`awards:${category.id}`] || {}
+                const totalVotes = Object.values(scopeTallies).reduce((a, b) => a + b, 0)
 
                 return (
                   <motion.div
@@ -104,6 +144,8 @@ export default function AwardsPage() {
                     <div className="grid sm:grid-cols-2 gap-3">
                       {category.nominees.map((nominee) => {
                         const isSelected = selectedNominee === nominee.id
+                        const voteCount = scopeTallies[nominee.id] || 0
+                        const pct = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0
 
                         return (
                           <motion.button
@@ -124,6 +166,24 @@ export default function AwardsPage() {
                               {nominee.name}
                             </p>
                             <p className="text-xs text-zinc-500">{nominee.reason}</p>
+
+                            {/* Vote tally bar (shown after submission) */}
+                            {submitted && totalVotes > 0 && (
+                              <div className="mt-3">
+                                <div className="flex justify-between text-xs mb-1">
+                                  <span className="text-zinc-500 font-accent">{voteCount} votes</span>
+                                  <span className="text-zinc-500 font-accent">{pct}%</span>
+                                </div>
+                                <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                                  <motion.div
+                                    className={cn('h-full rounded-full', heat.bgClass)}
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${pct}%` }}
+                                    transition={{ duration: 0.6, ease: MOTION.ease.outExpo }}
+                                  />
+                                </div>
+                              </div>
+                            )}
                           </motion.button>
                         )
                       })}
