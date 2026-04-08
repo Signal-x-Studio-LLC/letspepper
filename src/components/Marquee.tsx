@@ -202,25 +202,54 @@ export function Marquee({
   )
 }
 
+const upcomingEvents = [
+  { name: 'Bell Pepper Open', date: '2026-06-06', displayDate: 'June 6', variant: 'bell' as const },
+  { name: 'Jalapeño Open', date: '2026-07-18', displayDate: 'July 18', variant: 'jalapeno' as const },
+  { name: 'Poblano Open', date: '2026-08-01', displayDate: 'Aug 1', variant: 'poblano' as const },
+]
+
 /**
- * Pre-configured Pepper Belle announcement marquee
+ * Dynamic "Next Up" announcement marquee
+ * Shows the next upcoming event, or Pepper Belle fallback in the off-season
  * WCAG 2.2.2 compliant with pause controls and reduced motion support
  */
-export function PepperBelleMarquee({ className }: { className?: string }) {
+export function NextEventMarquee({ className }: { className?: string }) {
+  const today = new Date().toISOString().split('T')[0]
+  const next = upcomingEvents.find((e) => e.date >= today)
+
+  if (!next) {
+    // Off-season fallback
+    return (
+      <Marquee
+        items={[
+          { text: 'Season Complete' },
+          { text: '〰️' },
+          { text: 'See You Next Year', highlight: true },
+          { text: '〰️' },
+        ]}
+        variant="belle"
+        speed={25}
+        rotation={-3}
+        className={className}
+      />
+    )
+  }
+
   return (
     <Marquee
       items={[
-        { text: "Women's Pepper Belle" },
+        { text: 'Next Up' },
         { text: '〰️' },
-        { text: 'Coming Soon', highlight: true },
+        { text: next.name, highlight: true },
+        { text: '〰️' },
+        { text: next.displayDate },
+        { text: '〰️' },
+        { text: 'Aurora, IL' },
         { text: '〰️' },
       ]}
-      variant="belle"
+      variant={next.variant}
       speed={25}
       rotation={-3}
-      pauseOnHover={true}
-      gradient={true}
-      showControls={true}
       className={className}
     />
   )

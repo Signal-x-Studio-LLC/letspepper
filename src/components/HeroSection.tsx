@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { MOTION, useReducedMotion } from '@/lib/motion'
-import { PepperBelleMarquee } from './Marquee'
+import { NextEventMarquee } from './Marquee'
 
 const taglineWords = ['UNDERGROUND.', 'UNFILTERED.', 'UNAPOLOGETICALLY', 'COMPETITIVE.']
 
@@ -37,14 +37,14 @@ export function HeroSection() {
         aria-hidden="true"
       />
 
-      {/* Pepper Belle Announcement Marquee */}
+      {/* Next Event Announcement Marquee */}
       <motion.div
         className="absolute top-[35%] left-0 right-0 z-30 pointer-events-none"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.8, duration: 0.8 }}
       >
-        <PepperBelleMarquee />
+        <NextEventMarquee />
       </motion.div>
 
       <div className="section-container relative z-10">
