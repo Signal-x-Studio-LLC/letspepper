@@ -47,3 +47,4 @@ export async function GET() {
 
   return ok({ distribution, total })
 }
+export const runtime = "edge";

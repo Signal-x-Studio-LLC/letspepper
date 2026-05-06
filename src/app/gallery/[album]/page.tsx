@@ -62,3 +62,4 @@ export default async function AlbumPage({ params, searchParams }: PageProps) {
     />
   )
 }
+export const runtime = "edge";

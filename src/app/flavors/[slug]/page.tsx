@@ -411,3 +411,4 @@ export default function FlavorPage({ params }: { params: { slug: string } }) {
     </>
   )
 }
+export const runtime = "edge";

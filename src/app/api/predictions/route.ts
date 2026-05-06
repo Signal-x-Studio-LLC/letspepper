@@ -83,3 +83,4 @@ export async function GET(request: NextRequest) {
     ownEntry,
   })
 }
+export const runtime = "edge";

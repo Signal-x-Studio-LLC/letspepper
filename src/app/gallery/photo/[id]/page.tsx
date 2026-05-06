@@ -28,3 +28,4 @@ export default async function PhotoPage({ params }: PageProps) {
 
   return <PhotoDetailView photo={photo} />
 }
+export const runtime = "edge";

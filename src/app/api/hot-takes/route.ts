@@ -90,3 +90,4 @@ export async function POST(request: Request) {
 
   return ok({ success: true, status: 'pending' })
 }
+export const runtime = "edge";

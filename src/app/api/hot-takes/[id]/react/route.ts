@@ -58,3 +58,4 @@ export async function POST(
     return ok({ reacted: true })
   }
 }
+export const runtime = "edge";

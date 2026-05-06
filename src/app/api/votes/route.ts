@@ -60,3 +60,4 @@ export async function GET(request: NextRequest) {
 
   return ok({ tallies })
 }
+export const runtime = "edge";

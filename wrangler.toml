@@ -1,0 +1,8 @@
+name = "letspepper"
+pages_build_output_dir = ".vercel/output/static"
+compatibility_flags = ["nodejs_compat"]
+compatibility_date = "2024-05-01"
+
+[vars]
+SUPABASE_URL = "https://skywzpcekhntecegyjoj.supabase.co"
+NEXT_PUBLIC_CF_STREAM_SUBDOMAIN = "mztsxz382jswgq00"
