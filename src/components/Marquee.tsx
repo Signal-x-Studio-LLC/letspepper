@@ -203,7 +203,7 @@ export function Marquee({
 }
 
 const upcomingEvents = [
-  { name: 'Bell Pepper Open', date: '2026-06-06', displayDate: 'June 6', variant: 'bell' as const },
+  { name: 'Bell Pepper Open', date: '2026-06-07', displayDate: 'June 7', variant: 'bell' as const },
   { name: 'Jalapeño Open', date: '2026-07-18', displayDate: 'July 18', variant: 'jalapeno' as const },
   { name: 'Poblano Open', date: '2026-08-01', displayDate: 'Aug 1', variant: 'poblano' as const },
 ]

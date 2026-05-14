@@ -36,7 +36,7 @@ const tournaments: Record<string, TournamentDetail> = {
     tagline: 'Season Opener',
     headline: 'The season opener. First tournament of the Let\'s Pepper Series — shake off the rust, find your rhythm, and get warmed up.',
     description: 'Player-first, payout-backed, and media-covered. This is where the Let\'s Pepper Series begins. Building momentum for the season ahead.',
-    date: 'Saturday, June 6, 2026',
+    date: 'Sunday, June 7, 2026',
     time: 'Check-in 8:30 AM · Serve by 9:00 AM',
     location: 'Nature Meadows Park · 1861 Westridge Pl, Aurora, IL 60504',
     division: 'Grass Triples (One Division)',
