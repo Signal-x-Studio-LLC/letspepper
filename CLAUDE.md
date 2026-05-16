@@ -4,7 +4,7 @@
 
 Let's Pepper is an underground grass volleyball tournament series website. The brand emphasizes being player-first, media-backed, and competition-focused with cash payouts.
 
-**Live Site:** https://letspepper.vercel.app (or custom domain if configured)
+**Live Site:** https://letspepper.com (Cloudflare Pages project: `letspepper`, also reachable at letspepper.pages.dev)
 **Repository:** https://github.com/nino-chavez/letspepper
 
 ## Tech Stack
@@ -13,7 +13,7 @@ Let's Pepper is an underground grass volleyball tournament series website. The b
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS with custom design system
 - **Animations:** Framer Motion
-- **Deployment:** Vercel
+- **Deployment:** Cloudflare Pages (via GitHub Actions → `wrangler pages deploy`)
 - **Fonts:** Bebas Neue (display), Inter (body), Space Mono (accent)
 
 ## Project Structure
@@ -138,8 +138,10 @@ pnpm dev
 # Build for production
 pnpm build
 
-# Deploy to Vercel
-vercel --prod
+# Deploy is automatic on push to main via .github/workflows/deploy.yml
+# Manual deploy (rare):
+pnpm exec @cloudflare/next-on-pages
+pnpm dlx wrangler pages deploy .vercel/output/static --project-name=letspepper
 ```
 
 ## Content Updates

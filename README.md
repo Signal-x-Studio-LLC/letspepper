@@ -7,7 +7,7 @@ Let's Pepper is a player-first grass volleyball tournament series built for comp
 ![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue?logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8?logo=tailwindcss)
-![Vercel](https://img.shields.io/badge/Deployed-Vercel-black?logo=vercel)
+![Cloudflare Pages](https://img.shields.io/badge/Deployed-Cloudflare%20Pages-F38020?logo=cloudflare)
 
 ## About
 
@@ -30,7 +30,7 @@ Let's Pepper is a grass triples tournament series that strips volleyball down to
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 - **Animations:** [Framer Motion](https://www.framer.com/motion/)
 - **Fonts:** Bebas Neue, Inter, Space Mono
-- **Deployment:** [Vercel](https://vercel.com/)
+- **Deployment:** [Cloudflare Pages](https://pages.cloudflare.com/)
 
 ## Getting Started
 
@@ -105,12 +105,15 @@ The brand uses pepper-themed heat levels for visual hierarchy:
 
 ## Deployment
 
-The site is deployed on Vercel. Push to `main` to trigger automatic deployment.
+The site is deployed on Cloudflare Pages at [letspepper.com](https://letspepper.com). Push to `main` triggers the GitHub Actions workflow at `.github/workflows/deploy.yml`, which builds with `@cloudflare/next-on-pages` and deploys via `wrangler pages deploy`.
 
 ```bash
-# Manual production deployment
-vercel --prod
+# Manual production deployment (rarely needed; CI handles it)
+pnpm exec @cloudflare/next-on-pages
+pnpm dlx wrangler pages deploy .vercel/output/static --project-name=letspepper
 ```
+
+The build output directory is named `.vercel/output/static` because that's the Next.js standard output path that `@cloudflare/next-on-pages` consumes — not a sign of a Vercel deployment.
 
 ## License
 

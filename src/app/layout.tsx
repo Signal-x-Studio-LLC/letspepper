@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import { Bebas_Neue, Inter, Space_Mono } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
 import Script from 'next/script'
 import './globals.css'
 
@@ -81,9 +80,6 @@ export default function RootLayout({
 
         {/* Main Content */}
         {children}
-
-        {/* Vercel Web Analytics */}
-        <Analytics />
 
         {/* Cloudflare Web Analytics */}
         <Script

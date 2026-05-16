@@ -10,7 +10,7 @@ Copy-paste these when creating events from the Let's Pepper Facebook Page.
 - **Category:** Amateur Sports Team (or Sports Event)
 - **Username:** @letspepper.open (match Instagram if available)
 - **Bio:** Underground grass volleyball tournament series. Player-first. Media-backed. Cash payouts. Aurora, IL.
-- **Website:** https://letspepper.vercel.app
+- **Website:** https://letspepper.com
 - **Instagram:** @letspepper.open
 - **Profile Photo:** Bell pepper logo (`public/images/mascots/bell-pepper-logo.png`)
 - **Cover Photo:** Use `social/exports/teaser/1-series-announcement.png`
@@ -79,7 +79,7 @@ GOOD TO KNOW
 
 DM @letspepper.open on Instagram to register your team.
 
-Website: https://letspepper.vercel.app/flavors/bell-pepper-open
+Website: https://letspepper.com/flavors/bell-pepper-open
 
 ---
 
@@ -145,7 +145,7 @@ GOOD TO KNOW
 
 DM @letspepper.open on Instagram to register your team.
 
-Website: https://letspepper.vercel.app/flavors/jalapeno-open
+Website: https://letspepper.com/flavors/jalapeno-open
 
 ---
 
@@ -211,4 +211,4 @@ GOOD TO KNOW
 
 DM @letspepper.open on Instagram to register your team.
 
-Website: https://letspepper.vercel.app/flavors/poblano-open
+Website: https://letspepper.com/flavors/poblano-open
