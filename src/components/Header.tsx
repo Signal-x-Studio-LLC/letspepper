@@ -13,6 +13,7 @@ const navLinks = [
   { href: '/about', label: 'About' },
   { href: '/standings', label: 'Standings' },
   { href: '/gallery', label: 'Gallery' },
+  { href: '/signup', label: 'Sign Up', highlight: true },
 ]
 
 const communityLinks = [
@@ -83,7 +84,12 @@ export function Header() {
                 <Link
                   href={link.href}
                   role="menuitem"
-                  className="font-accent text-sm uppercase tracking-wider text-zinc-400 hover:text-white transition-colors"
+                  className={cn(
+                    'font-accent text-sm uppercase tracking-wider transition-colors',
+                    link.highlight
+                      ? 'text-heat-jalapeno hover:text-heat-jalapeno/80'
+                      : 'text-zinc-400 hover:text-white'
+                  )}
                 >
                   {link.label}
                 </Link>
@@ -189,7 +195,12 @@ export function Header() {
                     href={link.href}
                     role="menuitem"
                     onClick={() => setIsOpen(false)}
-                    className="block font-display text-3xl uppercase text-white hover:text-heat-jalapeno transition-colors"
+                    className={cn(
+                      'block font-display text-3xl uppercase transition-colors',
+                      link.highlight
+                        ? 'text-heat-jalapeno hover:text-heat-jalapeno/80'
+                        : 'text-white hover:text-heat-jalapeno'
+                    )}
                   >
                     {link.label}
                   </Link>

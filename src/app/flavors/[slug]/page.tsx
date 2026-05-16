@@ -387,8 +387,8 @@ export default function FlavorPage({ params }: { params: { slug: string } }) {
               </p>
 
               <div className="flex flex-wrap justify-center gap-4 pt-4">
-                <Link href="/#series" className="btn-primary">
-                  <span>View All Events</span>
+                <Link href="/signup" className="btn-primary">
+                  <span>Sign Up Your Team</span>
                   <span aria-hidden="true">→</span>
                 </Link>
                 <a
@@ -401,6 +401,12 @@ export default function FlavorPage({ params }: { params: { slug: string } }) {
                   <span>View Gallery</span>
                   <span aria-hidden="true">↗</span>
                 </a>
+                <Link
+                  href="/#series"
+                  className="font-accent text-sm uppercase tracking-wider text-zinc-400 hover:text-white transition-colors self-center"
+                >
+                  View all events →
+                </Link>
               </div>
             </motion.div>
           </div>
